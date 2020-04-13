@@ -22,6 +22,7 @@
 /* Prototypes */
 
 void processline(char *line);
+char **arg_parse(char *line, int *argcptr);
 
 /* Shell main */
 
@@ -58,6 +59,10 @@ void processline(char *line)
     pid_t cpid;
     int status;
 
+    /* process the args */
+    int *argc = 0;
+    char **argv = arg_parse(line, argc);
+
     /* Start a new process to do the job. */
     cpid = fork();
     if (cpid < 0)
@@ -71,7 +76,7 @@ void processline(char *line)
     if (cpid == 0)
     {
         /* We are the child! */
-        execlp(line, line, (char *)0);
+        execvp(argv[0], argv);
         /* execlp reurned, wasn't successful */
         perror("exec");
         fclose(stdin); // avoid a linux stdio bug
@@ -84,4 +89,62 @@ void processline(char *line)
         /* Wait wasn't successful */
         perror("wait");
     }
+}
+
+/*Parse Arguments
+ * Processes a string containing an executable command into an array of arguments.
+ * 
+ * @TODO: process command line arguments that have double qoutes.
+ */
+char **arg_parse(char *line, int *argcptr)
+{
+    /* count argv */
+    int count = 0;
+    char *pos = line;
+    while (*pos != '\0')
+    {
+        if (*pos == ' ')
+        {
+            pos++;
+        }
+        else 
+        {
+            count++;
+            while (*pos != '\0' && *pos != ' ')
+            {
+                pos++;
+            }
+        }
+    }
+
+    /* malloc size + 1 */
+    char **argv = (char **) malloc(sizeof(char *) * (count + 1));
+    argv[count] = NULL;
+
+    /* assign pointers and add EOS chars */
+    count = 0;
+    pos = line;
+    while (*pos != '\0')
+    {
+        if (*pos == ' ')
+        {
+            pos++;
+        }
+        else 
+        {
+            argv[count] = pos;
+            count++;
+            while (*pos != '\0' && *pos != ' ')
+            {
+                pos++;
+            }
+            if (*pos != '\0')
+            {
+                *pos = '\0';
+                pos++;
+            }
+        }
+    }
+
+    return argv;
 }

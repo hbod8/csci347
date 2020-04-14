@@ -181,7 +181,7 @@ char **arg_parse(char *line, int *argcptr)
     /*remove qoutes */
     count--;
     char *nq;
-    while (count > 0) {
+    while (count >= 0) {
         pos = argv[count];
         nq = argv[count];
         while (*nq != '\0' && *pos != '\0') {

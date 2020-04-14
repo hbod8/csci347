@@ -62,8 +62,8 @@ void processline(char *line)
     int status;
 
     /* process the args */
-    int *argc = 0;
-    char **argv = arg_parse(line, argc);
+    int argc = 0;
+    char **argv = arg_parse(line, &argc);
 
     /* Start a new process to do the job. */
     cpid = fork();
@@ -109,18 +109,36 @@ char **arg_parse(char *line, int *argcptr)
         {
             pos++;
         }
-        else 
+        else
         {
             count++;
             while (*pos != '\0' && *pos != ' ')
             {
-                pos++;
+                if (*pos == '"')
+                {
+                    pos++;
+                    while (*pos != '"')
+                    {
+                        if (*pos == '\0')
+                        {
+                            printf("Wrong number of double qoutes.\n");
+                            return NULL;
+                        }
+                        pos++;
+                    }
+                    pos++;
+                }
+                else
+                {
+                    pos++;
+                }
             }
         }
     }
+    *argcptr = count;
 
     /* malloc size + 1 */
-    char **argv = (char **) malloc(sizeof(char *) * (count + 1));
+    char **argv = (char **)malloc(sizeof(char *) * (count + 1));
     argv[count] = NULL;
 
     /* assign pointers and add EOS chars */
@@ -132,13 +150,25 @@ char **arg_parse(char *line, int *argcptr)
         {
             pos++;
         }
-        else 
+        else
         {
             argv[count] = pos;
             count++;
             while (*pos != '\0' && *pos != ' ')
             {
-                pos++;
+                if (*pos == '"')
+                {
+                    pos++;
+                    while (*pos != '"')
+                    {
+                        pos++;
+                    }
+                    pos++;
+                }
+                else
+                {
+                    pos++;
+                }
             }
             if (*pos != '\0')
             {
@@ -146,6 +176,24 @@ char **arg_parse(char *line, int *argcptr)
                 pos++;
             }
         }
+    }
+
+    /*remove qoutes */
+    count--;
+    char *nq;
+    while (count > 0) {
+        pos = argv[count];
+        nq = argv[count];
+        while (*nq != '\0' && *pos != '\0') {
+            while (*nq == '"') {
+                nq++;
+            }
+            *pos = *nq;
+            pos++;
+            nq++;
+        }
+        *pos = '\0';
+        count--;
     }
 
     return argv;

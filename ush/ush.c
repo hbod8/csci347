@@ -1,4 +1,4 @@
-/* CS 352 -- Micro Shell!  
+/* CS 347 -- Micro Shell!  
  *
  *   Sept 21, 2000,  Phil Nelson
  *   Modified April 8, 2001 

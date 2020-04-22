@@ -26,67 +26,66 @@
 
 int main(void)
 {
-    char buffer[LINELEN];
-    int len;
+  char buffer[LINELEN];
+  int len;
 
-    while (1)
-    {
+  while (1)
+  {
 
-        /* prompt and get line */
-        fprintf(stderr, "%% ");
-        if (fgets(buffer, LINELEN, stdin) != buffer)
-            break;
+    /* prompt and get line */
+    fprintf(stderr, "%% ");
+    if (fgets(buffer, LINELEN, stdin) != buffer)
+      break;
 
-        /* Get rid of \n at end of buffer. */
-        len = strlen(buffer);
-        if (buffer[len - 1] == '\n')
-            buffer[len - 1] = 0;
+    /* Get rid of \n at end of buffer. */
+    len = strlen(buffer);
+    if (buffer[len - 1] == '\n')
+      buffer[len - 1] = 0;
 
-        /* Run it ... */
-        processline(buffer);
-    }
+    /* Run it ... */
+    processline(buffer);
+  }
 
-    if (!feof(stdin))
-        perror("read");
+  if (!feof(stdin))
+    perror("read");
 
-    return 0; /* Also known as exit (0); */
+  return 0; /* Also known as exit (0); */
 }
 
 void processline(char *line)
 {
-    pid_t cpid;
-    int status;
+  pid_t cpid;
+  int status;
+  /* process the args */
+  int argc = 0;
+  char **argv = arg_parse(line, &argc);
 
-    /* process the args */
-    int argc = 0;
-    char **argv = arg_parse(line, &argc);
+  /* Start a new process to do the job. */
+  cpid = fork();
+  if (cpid < 0)
+  {
+    /* Fork wasn't successful */
+    perror("fork");
+    return;
+  }
 
-    /* Start a new process to do the job. */
-    cpid = fork();
-    if (cpid < 0)
-    {
-        /* Fork wasn't successful */
-        perror("fork");
-        return;
-    }
+  /* Check for who we are! */
+  if (cpid == 0)
+  {
+    /* We are the child! */
+    execvp(argv[0], argv);
+    /* execlp reurned, wasn't successful */
+    perror("exec");
+    fclose(stdin); // avoid a linux stdio bug
+    exit(127);
+  }
 
-    /* Check for who we are! */
-    if (cpid == 0)
-    {
-        /* We are the child! */
-        execvp(argv[0], argv);
-        /* execlp reurned, wasn't successful */
-        perror("exec");
-        fclose(stdin); // avoid a linux stdio bug
-        exit(127);
-    }
-
-    /* Have the parent wait for child to complete */
-    if (wait(&status) < 0)
-    {
-        /* Wait wasn't successful */
-        perror("wait");
-    }
+  /* Have the parent wait for child to complete */
+  if (wait(&status) < 0)
+  {
+    /* Wait wasn't successful */
+    perror("wait");
+  }
 }
 
 /*Parse Arguments
@@ -96,101 +95,104 @@ void processline(char *line)
  */
 char **arg_parse(char *line, int *argcptr)
 {
-    /* count argv */
-    int count = 0;
-    char *pos = line;
-    while (*pos != '\0')
+  /* count argv */
+  int count = 0;
+  char *pos = line;
+  while (*pos != '\0')
+  {
+    if (*pos == ' ')
     {
-        if (*pos == ' ')
+      pos++;
+    }
+    else
+    {
+      count++;
+      while (*pos != '\0' && *pos != ' ')
+      {
+        if (*pos == '"')
         {
+          pos++;
+          while (*pos != '"')
+          {
+            if (*pos == '\0')
+            {
+              printf("Wrong number of double qoutes.\n");
+              return NULL;
+            }
             pos++;
+          }
+          pos++;
         }
         else
         {
-            count++;
-            while (*pos != '\0' && *pos != ' ')
-            {
-                if (*pos == '"')
-                {
-                    pos++;
-                    while (*pos != '"')
-                    {
-                        if (*pos == '\0')
-                        {
-                            printf("Wrong number of double qoutes.\n");
-                            return NULL;
-                        }
-                        pos++;
-                    }
-                    pos++;
-                }
-                else
-                {
-                    pos++;
-                }
-            }
+          pos++;
         }
+      }
     }
-    *argcptr = count;
+  }
+  *argcptr = count;
 
-    /* malloc size + 1 */
-    char **argv = (char **)malloc(sizeof(char *) * (count + 1));
-    argv[count] = NULL;
+  /* malloc size + 1 */
+  char **argv = (char **)malloc(sizeof(char *) * (count + 1));
+  argv[count] = NULL;
 
-    /* assign pointers and add EOS chars */
-    count = 0;
-    pos = line;
-    while (*pos != '\0')
+  /* assign pointers and add EOS chars */
+  count = 0;
+  pos = line;
+  while (*pos != '\0')
+  {
+    if (*pos == ' ')
     {
-        if (*pos == ' ')
+      pos++;
+    }
+    else
+    {
+      argv[count] = pos;
+      count++;
+      while (*pos != '\0' && *pos != ' ')
+      {
+        if (*pos == '"')
         {
+          pos++;
+          while (*pos != '"')
+          {
             pos++;
+          }
+          pos++;
         }
         else
         {
-            argv[count] = pos;
-            count++;
-            while (*pos != '\0' && *pos != ' ')
-            {
-                if (*pos == '"')
-                {
-                    pos++;
-                    while (*pos != '"')
-                    {
-                        pos++;
-                    }
-                    pos++;
-                }
-                else
-                {
-                    pos++;
-                }
-            }
-            if (*pos != '\0')
-            {
-                *pos = '\0';
-                pos++;
-            }
+          pos++;
         }
-    }
-
-    /*remove qoutes */
-    count--;
-    char *nq;
-    while (count >= 0) {
-        pos = argv[count];
-        nq = argv[count];
-        while (*nq != '\0' && *pos != '\0') {
-            while (*nq == '"') {
-                nq++;
-            }
-            *pos = *nq;
-            pos++;
-            nq++;
-        }
+      }
+      if (*pos != '\0')
+      {
         *pos = '\0';
-        count--;
+        pos++;
+      }
     }
+  }
 
-    return argv;
+  /*remove qoutes */
+  count--;
+  char *nq;
+  while (count >= 0)
+  {
+    pos = argv[count];
+    nq = argv[count];
+    while (*nq != '\0' && *pos != '\0')
+    {
+      while (*nq == '"')
+      {
+        nq++;
+      }
+      *pos = *nq;
+      pos++;
+      nq++;
+    }
+    *pos = '\0';
+    count--;
+  }
+
+  return argv;
 }

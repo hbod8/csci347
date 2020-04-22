@@ -16,15 +16,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "defn.h"
 
 /* Constants */
 
 #define LINELEN 1024
-
-/* Prototypes */
-
-void processline(char *line);
-char **arg_parse(char *line, int *argcptr);
 
 /* Shell main */
 

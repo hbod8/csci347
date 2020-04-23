@@ -59,6 +59,10 @@ int expand(char *orig, char *new, int newsize)
       }
       // Add any other expansion rules here
     }
+    else
+    {
+      src--;
+    }
     // copy
     new[dst] = orig[src];
     src++;

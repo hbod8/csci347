@@ -68,6 +68,12 @@ void processline(char *line)
   int argc = 0;
   char **argv = arg_parse(processedLine, &argc);
 
+  /* check for built-ins */
+  if(shellcommand(argv, argc) == 0)
+  {
+    return;
+  }
+
   /* Start a new process to do the job. */
   cpid = fork();
   if (cpid < 0)

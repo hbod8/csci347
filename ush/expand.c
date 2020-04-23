@@ -38,20 +38,20 @@ int expand(char *orig, char *new, int newsize)
         orig[src] = '\0';
         // Attempt to get variable
         char *var = getenv(varName);
-        if (!var)
+        if (var)
         {
-          *var = '\0';
-        }
-        // Copy in variable
-        while (*var != '\0' && dst < newsize)
-        {
-          new[dst] = *var;
-          dst++;
-          var++;
+          // Copy in variable
+          while (*var != '\0' && dst < newsize)
+          {
+            new[dst] = *var;
+            dst++;
+            var++;
+          }
         }
       }
       // Expand PID
-      if (orig[src] == '$') {
+      if (orig[src] == '$')
+      {
         src++;
         int size = snprintf(&new[dst], newsize - dst, "%d", getpid());
         dst += size;

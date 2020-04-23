@@ -51,17 +51,18 @@ int expand(char *orig, char *new, int newsize)
         }
       }
       // Expand PID
-      if (orig[src] == '$')
+      else if (orig[src] == '$')
       {
         src++;
         int size = snprintf(&new[dst], newsize - dst, "%d", getpid());
         dst += size;
       }
+      else
+      {
+        src--;
+      }
+      
       // Add any other expansion rules here
-    }
-    else
-    {
-      src--;
     }
     // copy
     new[dst] = orig[src];

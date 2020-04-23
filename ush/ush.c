@@ -56,9 +56,17 @@ void processline(char *line)
 {
   pid_t cpid;
   int status;
+
+  /* expand enviroment variables */
+  char *processedLine = (char *) malloc(sizeof(char) * LINELEN);
+  if (expand(line, processedLine, LINELEN) < 0) {
+    printf("ERROR");
+    return;
+  }
+
   /* process the args */
   int argc = 0;
-  char **argv = arg_parse(line, &argc);
+  char **argv = arg_parse(processedLine, &argc);
 
   /* Start a new process to do the job. */
   cpid = fork();

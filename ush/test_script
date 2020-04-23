@@ -1,0 +1,39 @@
+Script started on 2020-04-22 22:06:41-0700
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ make clean
+rm -f ush.o expand.o builtin.o ush
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ ls
+builtin.c  defn.h  expand.c  grading_script.ps  Makefile  test_script.ps  ush.c
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ make
+gcc -g -Wall   -c -o ush.o ush.c
+gcc -g -Wall   -c -o expand.o expand.c
+gcc -g -Wall   -c -o builtin.o builtin.c
+gcc -g -Wall -o ush ush.o expand.o builtin.o
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ ls
+builtin.c  builtin.o  defn.h  expand.c  expand.o  grading_script.ps  Makefile  test_script.ps  [0m[01;32mush[0m  ush.c  ush.o
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ ./ush
+% 
+% echo "           hello           worlkd  d              "
+           hello           world              
+% echo ${LANG}
+en_US.UTF-8
+% envset TESTINGVAR testingvar
+% echo ${TESTINGVAR}
+testingvar
+% envset A ${TESTINGVAR}
+% echo ${A}
+testingvar
+% envunset TESTINGVAR
+% cd //  ../
+% ls
+ush
+% cd ush
+% cd
+% ls
+api.harry.technology  ddns	 Downloads	   HuurbAPI    LAMP_PHP_7_bitnami_application_password	Music				      packages-microsoft-prod.deb  Pimostat  rootkey.csv  Templates
+cs330		      Desktop	 examples.desktop  HuurbUI     LAMP_PHP_7_bitnami_credentials		node-js_bitnami_application_password  personal-website-cs202	   Postman   rummicomp	  Videos
+cs347		      Documents  harry.technology  index.html  max.nvidia-settings-rc			node-js_bitnami_credentials	      Pictures			   Public    snap
+% exit
+]0;harry@harry-pc: ~/cs347/csci347_s20/ush[01;32mharry@harry-pc[00m:[01;34m~/cs347/csci347_s20/ush[00m$ exit
+exit
+
+Script done on 2020-04-22 22:09:18-0700

@@ -60,7 +60,6 @@ void processline(char *line)
   /* expand enviroment variables */
   char *processedLine = (char *) malloc(sizeof(char) * LINELEN);
   if (expand(line, processedLine, LINELEN) < 0) {
-    printf("ERROR");
     return;
   }
 

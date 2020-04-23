@@ -31,6 +31,7 @@ int expand(char *orig, char *new, int newsize)
           if (orig[src] == '\0')
           {
             //err
+            fprintf(stderr, "a missing } error\n");
             return -1;
           }
           src++;
@@ -61,13 +62,19 @@ int expand(char *orig, char *new, int newsize)
       {
         src--;
       }
-      
+
       // Add any other expansion rules here
     }
     // copy
     new[dst] = orig[src];
     src++;
     dst++;
+  }
+
+  if (dst >= newsize)
+  {
+    fprintf(stderr, "an expansion overflow error\n");
+    return -1;
   }
   // puts(new);
   return 0;

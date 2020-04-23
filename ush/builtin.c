@@ -47,7 +47,7 @@ int shellcommand(char **args, int argc)
     {
       char *home = getenv("HOME");
       if (!home) {
-        perror("HOME unset");
+        fprintf(stderr, "cd errors: HOME unset\n");
       }
       else
       {
@@ -56,7 +56,7 @@ int shellcommand(char **args, int argc)
     }
     else
     {
-      perror("Usage: cd [directory]");
+      fprintf(stderr, "cd errors: Usage: cd [directory]\n");
       return 0;
     }
     return 0;

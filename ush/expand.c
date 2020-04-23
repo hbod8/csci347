@@ -36,6 +36,7 @@ int expand(char *orig, char *new, int newsize)
           src++;
         }
         orig[src] = '\0';
+        src++;
         // Attempt to get variable
         char *var = getenv(varName);
         if (var)

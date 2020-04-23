@@ -58,17 +58,22 @@ void processline(char *line)
   int status;
 
   /* expand enviroment variables */
-  char *processedLine = (char *) malloc(sizeof(char) * LINELEN);
-  if (expand(line, processedLine, LINELEN) < 0) {
+  char *processedLine = (char *)malloc(sizeof(char) * LINELEN);
+  if (expand(line, processedLine, LINELEN) < 0)
+  {
     return;
   }
 
   /* process the args */
   int argc = 0;
   char **argv = arg_parse(processedLine, &argc);
+  if (argc == 0)
+  {
+    return;
+  }
 
   /* check for built-ins */
-  if(shellcommand(argv, argc) == 0)
+  if (shellcommand(argv, argc) == 0)
   {
     return;
   }

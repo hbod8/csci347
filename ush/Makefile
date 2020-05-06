@@ -8,7 +8,7 @@ FILES = ush.o expand.o builtin.o
 ush: $(FILES)
 	$(CC) $(CFLAGS) -o ush $(FILES)
 
-$(FILES): defn.h
+$(FILES): defn.h globals.h
 
 clean:
 	rm -f $(FILES) ush

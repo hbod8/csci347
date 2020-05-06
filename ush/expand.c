@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "globals.h"
 
 int expand(char *orig, char *new, int newsize)
 {

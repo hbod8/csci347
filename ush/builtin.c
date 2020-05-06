@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "globals.h"
 
 int shellcommand(char **args, int argc)
 {

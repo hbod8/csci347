@@ -42,6 +42,9 @@ int main(void)
     if (buffer[len - 1] == '\n')
       buffer[len - 1] = 0;
 
+    /* Remove comments */
+    removeComments(buffer);
+
     /* Run it ... */
     processline(buffer);
   }
@@ -213,4 +216,30 @@ char **arg_parse(char *line, int *argcptr)
   }
 
   return argv;
+}
+
+/* remove comments */
+int removeComments(char *line)
+{
+  char *ptr = line;
+  while (*ptr != '\0')
+  {
+    if (*ptr == '$')
+    {
+      ptr++;
+      if (*ptr == '#')
+      {
+        ptr++;
+      }
+    }
+    else if (*ptr == '#')
+    {
+      *ptr = '\0';
+    }
+    else
+    {
+      ptr++;
+    }
+  }
+  return 0;
 }

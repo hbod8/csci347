@@ -21,3 +21,5 @@
 GLOBAL_VAR(int, mainargc, 0);
 
 GLOBAL_VAR(char **, mainargv, NULL);
+
+GLOBAL_VAR(int, shift, 0);

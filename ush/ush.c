@@ -27,6 +27,7 @@
 
 int mainargc;
 char **mainargv;
+int shift;
 FILE *infile;
 
 int main(int argc, char **argv)

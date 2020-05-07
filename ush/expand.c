@@ -69,18 +69,18 @@ int expand(char *orig, char *new, int newsize)
         }
         char save = orig[src];
         orig[src] = '\0';
-        int argnum = atoi(val);
+        int argnum = atoi(val) + 1;
         orig[src] = save;
-        if (argnum <= mainargc)
+        if (argnum < mainargc)
         {
-          int size = snprintf(&new[dst], newsize - dst, "%s", mainargv[argnum]);
+          int size = snprintf(&new[dst], newsize - dst, "%s", mainargv[argnum + shift]);
           dst += size;
         }
       }
       else if (orig[src] == '#')
       {
         src++;
-        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc);
+        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc - 1);
         dst += size;
       }
       else

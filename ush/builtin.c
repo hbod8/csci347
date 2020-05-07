@@ -62,5 +62,48 @@ int shellcommand(char **args, int argc)
     }
     return 0;
   }
+  else if (strcmp(args[0], "shift") == 0)
+  {
+    if (argc != 2)
+    {
+      perror("Usage: shift NUM");
+      return 0;
+    }
+    int numshift = atoi(args[1]);
+    if (numshift >= mainargc)
+    {
+      perror("Too many shifts");
+      return 0;
+    }
+    mainargc -= numshift;
+    shift += numshift;
+    return 0;
+  }
+  else if (strcmp(args[0], "unshift") == 0)
+  {
+    if (argc == 2)
+    {
+      int numshift = atoi(args[1]);
+      if (numshift >= mainargc)
+      {
+        perror("Too many shifts");
+        return 0;
+      }
+      mainargc += numshift;
+      shift -= numshift;
+      return 0;
+    }
+    else if (argc == 1)
+    {
+      mainargc += shift;
+      shift = 0;
+      return 0;
+    }
+    else
+    {
+      perror("Usage: unshift NUM");
+      return 0;
+    }
+  }
   return -1;
 }

@@ -54,3 +54,6 @@ dkms.conf
 
 # ush Executable
 ush/ush
+
+#ush script
+*.ush

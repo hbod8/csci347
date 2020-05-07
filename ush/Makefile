@@ -3,7 +3,7 @@
 
 CC = gcc
 CFLAGS = -g -Wall
-FILES = ush.o expand.o builtin.o
+FILES = ush.o expand.o builtin.o strmode.o
 
 ush: $(FILES)
 	$(CC) $(CFLAGS) -o ush $(FILES)

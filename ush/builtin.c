@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
 #include "globals.h"
 
 int shellcommand(char **args, int argc)
@@ -75,7 +80,6 @@ int shellcommand(char **args, int argc)
       perror("Too many shifts");
       return 0;
     }
-    mainargc -= numshift;
     shift += numshift;
     return 0;
   }
@@ -89,13 +93,11 @@ int shellcommand(char **args, int argc)
         perror("Too many shifts");
         return 0;
       }
-      mainargc += numshift;
       shift -= numshift;
       return 0;
     }
     else if (argc == 1)
     {
-      mainargc += shift;
       shift = 0;
       return 0;
     }
@@ -104,6 +106,31 @@ int shellcommand(char **args, int argc)
       perror("Usage: unshift NUM");
       return 0;
     }
+  }
+  else if (strcmp(args[0], "sstat") == 0)
+  {
+    if (argc < 2) {
+      perror("Usage: sstat file [file ...]");
+      return 0;
+    }
+    struct stat *filestats;
+    filestats = malloc(sizeof(struct stat));
+    for (int i = 1; i < argc; i++) {
+      if (stat(args[i], filestats) == 0) {
+        struct passwd *u = getpwuid(filestats->st_uid);
+        struct group *g = getgrgid(filestats->st_gid);
+        char permissions[256];
+        strmode(filestats->st_mode, &permissions);
+        time_t modtime = filestats->st_mtime;
+        printf("%s %s %s %s %ld %ld %s\n", args[i], u->pw_name, g->gr_name, permissions, filestats->st_nlink, filestats->st_size, asctime(localtime(&modtime)));
+      }
+      else
+      {
+        perror("Couldnt get filestats.");
+        return 0;
+      }
+    }
+    return 0;
   }
   return -1;
 }

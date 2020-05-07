@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <string.h>
 #include "globals.h"
 
 int expand(char *orig, char *new, int newsize)
@@ -71,7 +74,7 @@ int expand(char *orig, char *new, int newsize)
         orig[src] = '\0';
         int argnum = atoi(val) + 1;
         orig[src] = save;
-        if (argnum < mainargc)
+        if (argnum < mainargc - shift)
         {
           int size = snprintf(&new[dst], newsize - dst, "%s", mainargv[argnum + shift]);
           dst += size;
@@ -80,16 +83,48 @@ int expand(char *orig, char *new, int newsize)
       else if (orig[src] == '#')
       {
         src++;
-        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc - 1);
+        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc - 1 - shift);
         dst += size;
       }
-      else
-      {
-        new[dst] = orig[src];
-        src++;
-        dst++;
-      }
       // Add any other expansion rules here
+    }
+    // if start of wildcard
+    else if (orig[src] == '*' && (orig[src - 1] == ' ' || orig[src - 1] == '\0') && (orig[src + 1] == ' ' || orig[src + 1] == '\0'))
+    {
+      src++;
+      struct dirent* file;
+      DIR *d = opendir(".");
+      while ((file = readdir(d)))
+      {
+        char *fname = file->d_name;
+        int size = snprintf(&new[dst], newsize - dst, "%s ", fname);
+        dst += size;
+      }
+      dst--;
+    }
+    else if (orig[src] == '*' && (orig[src - 1] == ' ' || orig[src - 1] == '\0'))
+    {
+      src++;
+      char *match = &orig[src];
+      while (orig[src] != ' ' && orig[src] != '\0')
+      {
+        src++;
+      }
+      char save = orig[src];
+      orig[src] = '\0';
+      struct dirent* file;
+      DIR *d = opendir(".");
+      while ((file = readdir(d)))
+      {
+        char *fname = file->d_name;
+        if ((strlen(match) < strlen(fname)) && (strcmp(fname + strlen(fname) - strlen(match), match) == 0))
+        {
+          int size = snprintf(&new[dst], newsize - dst, "%s ", fname);
+          dst += size;
+        }
+      }
+      dst--;
+      orig[src] = save;
     }
     else
     {

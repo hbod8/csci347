@@ -18,3 +18,6 @@
 
 /* Actual global variables */
 
+GLOBAL_VAR(int, mainargc, 0);
+
+GLOBAL_VAR(char **, mainargv, NULL);

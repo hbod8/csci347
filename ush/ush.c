@@ -25,17 +25,39 @@
 
 /* Shell main */
 
-int main(void)
+int mainargc;
+char **mainargv;
+FILE *infile;
+
+int main(int argc, char **argv)
 {
   char buffer[LINELEN];
   int len;
+
+  mainargv = argv;
+  mainargc = argc;
+
+  infile = stdin;
+
+  if (argc > 1)
+  {
+    infile = fopen(mainargv[1], "r");
+    if (infile == 0)
+    {
+      perror("Error opening file.");
+      exit(127);
+    }
+  }
 
   while (1)
   {
 
     /* prompt and get line */
-    fprintf(stderr, "%% ");
-    if (fgets(buffer, LINELEN, stdin) != buffer)
+    if (infile == stdin)
+    {
+      fprintf(stderr, "%% ");
+    }
+    if (fgets(buffer, LINELEN, infile) != buffer)
       break;
 
     /* Get rid of \n at end of buffer. */
@@ -50,7 +72,7 @@ int main(void)
     processline(buffer);
   }
 
-  if (!feof(stdin))
+  if (!feof(infile))
     perror("read");
 
   return 0; /* Also known as exit (0); */
@@ -98,7 +120,7 @@ void processline(char *line)
     execvp(argv[0], argv);
     /* execlp reurned, wasn't successful */
     perror("exec");
-    fclose(stdin); // avoid a linux stdio bug
+    fclose(infile); // avoid a linux stdio bug
     exit(127);
   }
 

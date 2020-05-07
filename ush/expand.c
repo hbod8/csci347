@@ -59,17 +59,44 @@ int expand(char *orig, char *new, int newsize)
         int size = snprintf(&new[dst], newsize - dst, "%d", getpid());
         dst += size;
       }
+      // expand argument
+      else if (isdigit(orig[src]))
+      {
+        char *val = &orig[src];
+        while (isdigit(orig[src]))
+        {
+          src++;
+        }
+        char save = orig[src];
+        orig[src] = '\0';
+        int argnum = atoi(val);
+        orig[src] = save;
+        if (argnum <= mainargc)
+        {
+          int size = snprintf(&new[dst], newsize - dst, "%s", mainargv[argnum]);
+          dst += size;
+        }
+      }
+      else if (orig[src] == '#')
+      {
+        src++;
+        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc);
+        dst += size;
+      }
       else
       {
-        src--;
+        new[dst] = orig[src];
+        src++;
+        dst++;
       }
-
       // Add any other expansion rules here
     }
-    // copy
-    new[dst] = orig[src];
-    src++;
-    dst++;
+    else
+    {
+      new[dst] = orig[src];
+      src++;
+      dst++;
+    }
   }
 
   if (dst >= newsize)

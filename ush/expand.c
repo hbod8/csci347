@@ -74,6 +74,10 @@ int expand(char *orig, char *new, int newsize)
         orig[src] = '\0';
         int argnum = atoi(val) + 1;
         orig[src] = save;
+        if (mainargv[1] != NULL)
+        {
+          argnum = 0;
+        }
         if (argnum < mainargc - shift)
         {
           int size = snprintf(&new[dst], newsize - dst, "%s", mainargv[argnum + shift]);
@@ -82,8 +86,13 @@ int expand(char *orig, char *new, int newsize)
       }
       else if (orig[src] == '#')
       {
+        int scriptrun = 0;
+        if (mainargv[1] != NULL)
+        {
+          scriptrun = 1;
+        }
         src++;
-        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc - 1 - shift);
+        int size = snprintf(&new[dst], newsize - dst, "%d", mainargc - scriptrun - shift);
         dst += size;
       }
       // Add any other expansion rules here

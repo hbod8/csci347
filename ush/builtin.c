@@ -122,7 +122,7 @@ int shellcommand(char **args, int argc)
         char permissions[256];
         strmode(filestats->st_mode, &permissions);
         time_t modtime = filestats->st_mtime;
-        printf("%s %s %s %s %ld %ld %s\n", args[i], u->pw_name, g->gr_name, permissions, filestats->st_nlink, filestats->st_size, asctime(localtime(&modtime)));
+        printf("%s %s %s %s %ld %ld %s", args[i], u->pw_name, g->gr_name, permissions, filestats->st_nlink, filestats->st_size, asctime(localtime(&modtime)));
       }
       else
       {

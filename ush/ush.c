@@ -85,7 +85,7 @@ void processline(char *line)
   int status;
 
   /* expand enviroment variables */
-  char *processedLine = (char *)malloc(sizeof(char) * LINELEN);
+  char *processedLine = (char *)calloc(LINELEN, sizeof(char));
   if (expand(line, processedLine, LINELEN) < 0)
   {
     return;

@@ -218,11 +218,6 @@ int expand(char *orig, char *new, int newsize)
   // do pipelines/* process */
   char *pipepos = strchr(new, '|');
   if (pipepos != NULL) {
-    // int ends[2];
-    // if (pipe(ends) == -1) {
-    //   fprintf(stderr, "Pipe failed.");
-    //   return -1;
-    // }
     find_pipe(new, pipepos, 0);
   }
   // puts(new);

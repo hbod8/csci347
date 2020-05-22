@@ -11,6 +11,9 @@
 
 int shellcommand(char **args, int argc)
 {
+  // set exit value to 0
+  exitval = 0;
+  // Parse for shell commands
   if (strcmp(args[0], "exit") == 0)
   {
     if (argc == 1)
@@ -27,6 +30,7 @@ int shellcommand(char **args, int argc)
   {
     if (argc != 3)
     {
+      exitval = 1;
       perror("Usage: envset NAME value");
       return 0;
     }
@@ -37,6 +41,7 @@ int shellcommand(char **args, int argc)
   {
     if (argc != 2)
     {
+      exitval = 1;
       perror("Usage: envunset NAME");
       return 0;
     }
@@ -71,12 +76,14 @@ int shellcommand(char **args, int argc)
   {
     if (argc != 2)
     {
+      exitval = 1;
       perror("Usage: shift NUM");
       return 0;
     }
     int numshift = atoi(args[1]);
     if (numshift >= mainargc)
     {
+      exitval = 1;
       perror("Too many shifts");
       return 0;
     }
@@ -90,6 +97,7 @@ int shellcommand(char **args, int argc)
       int numshift = atoi(args[1]);
       if (numshift >= mainargc)
       {
+        exitval = 1;
         perror("Too many shifts");
         return 0;
       }
@@ -103,6 +111,7 @@ int shellcommand(char **args, int argc)
     }
     else
     {
+      exitval = 1;
       perror("Usage: unshift NUM");
       return 0;
     }
@@ -110,6 +119,7 @@ int shellcommand(char **args, int argc)
   else if (strcmp(args[0], "sstat") == 0)
   {
     if (argc < 2) {
+      exitval = 1;
       perror("Usage: sstat file [file ...]");
       return 0;
     }
@@ -126,6 +136,7 @@ int shellcommand(char **args, int argc)
       }
       else
       {
+        exitval = 1;
         perror("Couldnt get filestats.");
         return 0;
       }

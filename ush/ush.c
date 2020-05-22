@@ -16,22 +16,22 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include "globals.h"
 #include "defn.h"
-
-/* Constants */
-
-#define LINELEN 1024
 
 /* Shell main */
 
 int mainargc;
 char **mainargv;
+int exitval;
 int shift;
 FILE *infile;
 
 int main(int argc, char **argv)
 {
+  signal(SIGINT, handlesig);
+
   char buffer[LINELEN];
   int len;
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     removeComments(buffer);
 
     /* Run it ... */
-    processline(buffer);
+    processline(buffer, 1, WAIT);
   }
 
   if (!feof(infile))
@@ -79,8 +79,11 @@ int main(int argc, char **argv)
   return 0; /* Also known as exit (0); */
 }
 
-void processline(char *line)
+int processline(char *line, int outfd, int flags)
 {
+  
+  // printf("exec: '%s'\n", line);
+
   pid_t cpid;
   int status;
 
@@ -88,7 +91,7 @@ void processline(char *line)
   char *processedLine = (char *)calloc(LINELEN, sizeof(char));
   if (expand(line, processedLine, LINELEN) < 0)
   {
-    return;
+    return -1;
   }
 
   /* process the args */
@@ -96,13 +99,13 @@ void processline(char *line)
   char **argv = arg_parse(processedLine, &argc);
   if (argc == 0)
   {
-    return;
+    return -1;
   }
 
   /* check for built-ins */
   if (shellcommand(argv, argc) == 0)
   {
-    return;
+    return -1;
   }
 
   /* Start a new process to do the job. */
@@ -111,12 +114,17 @@ void processline(char *line)
   {
     /* Fork wasn't successful */
     perror("fork");
-    return;
+    return -1;
   }
 
   /* Check for who we are! */
   if (cpid == 0)
   {
+    /* be sure the fs is set correctly */
+    if (outfd != 1)
+    {
+      dup2(outfd, 1);
+    }
     /* We are the child! */
     execvp(argv[0], argv);
     /* execlp reurned, wasn't successful */
@@ -126,17 +134,31 @@ void processline(char *line)
   }
 
   /* Have the parent wait for child to complete */
-  if (wait(&status) < 0)
+  if (flags == WAIT)
   {
-    /* Wait wasn't successful */
-    perror("wait");
+    if (wait(&status) < 0)
+    {
+      /* Wait wasn't successful */
+      perror("wait");
+    }
+    else
+    {
+      if (WIFEXITED(status))
+      {
+        exitval = WEXITSTATUS(status);
+      }
+      else if (WIFSIGNALED(status))
+      {
+        exitval = WTERMSIG(status);
+      }
+    }
   }
+  return cpid;
 }
 
 /*Parse Arguments
  * Processes a string containing an executable command into an array of arguments.
  * 
- * @TODO: process command line arguments that have double qoutes.
  */
 char **arg_parse(char *line, int *argcptr)
 {
@@ -266,4 +288,13 @@ int removeComments(char *line)
     }
   }
   return 0;
+}
+
+/* Handle signals
+ *
+ * add 128 to the return value.
+ */
+void handlesig(int signal)
+{
+  exitval = signal + 128;
 }

@@ -6,6 +6,9 @@
 #include <ctype.h>
 #include <string.h>
 #include "globals.h"
+#include "defn.h"
+
+int exitval;
 
 int expand(char *orig, char *new, int newsize)
 {
@@ -22,7 +25,7 @@ int expand(char *orig, char *new, int newsize)
     if (orig[src] == '$')
     {
       src++;
-      // if env var
+      // Expand Enviroment Variable.
       if (orig[src] == '{')
       {
         src++;
@@ -55,11 +58,74 @@ int expand(char *orig, char *new, int newsize)
           }
         }
       }
+      // Expand Command
+      if (orig[src] == '(')
+      {
+        src++;
+        // remember the start of the name
+        char *commandName = &orig[src];
+        // loop until ending brace
+        int depth = 0;
+        while (orig[src] != ')' || depth > 0)
+        {
+          // if theres another opening brace, increment depth
+          if (orig[src] == '(')
+          {
+            depth++;
+          }
+          // if there is a closing brace, decrement depth
+          if (orig[src] == ')') {
+            depth--;
+          }
+          // be sure not EOS, if EOS then error no ending brace
+          if (orig[src] == '\0')
+          {
+            //err
+            fprintf(stderr, "a missing ) error\n");
+            return -1;
+          }
+          src++;
+        }
+        char saved = orig[src];
+        orig[src] = '\0';
+        // Run command
+        // Create pipe
+        int ends[2];
+        if (pipe(ends) == -1) {
+          fprintf(stderr, "Pipe failed.");
+          return -1;
+        }
+        processline(commandName, ends[1], WAIT);
+        orig[src] = saved;
+        src++;
+        close(ends[1]);
+        // create buffer
+        char buffer[LINELEN];
+        // read into buffer
+        // ssize_t size = read(ends[0], buffer, 2048);
+        read(ends[0], buffer, LINELEN);
+        close(ends[0]);
+        // Copy in command response
+        int pos;
+        while (buffer[pos] != '\0' && buffer[pos] != '\n' && dst < newsize)
+        {
+          new[dst] = buffer[pos];
+          dst++;
+          pos++;
+        }
+      }
       // Expand PID
       else if (orig[src] == '$')
       {
         src++;
         int size = snprintf(&new[dst], newsize - dst, "%d", getpid());
+        dst += size;
+      }
+      // Expand exit value
+      else if (orig[src] == '?')
+      {
+        src++;
+        int size = snprintf(&new[dst], newsize - dst, "%d", exitval);
         dst += size;
       }
       // expand argument
@@ -101,7 +167,7 @@ int expand(char *orig, char *new, int newsize)
     else if (orig[src] == '*' && (orig[src - 1] == ' ' || orig[src - 1] == '\0') && (orig[src + 1] == ' ' || orig[src + 1] == '\0'))
     {
       src++;
-      struct dirent* file;
+      struct dirent *file;
       DIR *d = opendir(".");
       while ((file = readdir(d)))
       {
@@ -121,7 +187,7 @@ int expand(char *orig, char *new, int newsize)
       }
       char save = orig[src];
       orig[src] = '\0';
-      struct dirent* file;
+      struct dirent *file;
       DIR *d = opendir(".");
       while ((file = readdir(d)))
       {

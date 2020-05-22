@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     removeComments(buffer);
 
     /* Run it ... */
-    processline(buffer, 1, WAIT);
+    processline(buffer, 0, 1, WAIT);
   }
 
   if (!feof(infile))
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
   return 0; /* Also known as exit (0); */
 }
 
-int processline(char *line, int outfd, int flags)
+int processline(char *line, int infd, int outfd, int flags)
 {
   
   // printf("exec: '%s'\n", line);
@@ -124,6 +124,10 @@ int processline(char *line, int outfd, int flags)
     if (outfd != 1)
     {
       dup2(outfd, 1);
+    }
+    if (infd != 0)
+    {
+      dup2(infd, 0);
     }
     /* We are the child! */
     execvp(argv[0], argv);

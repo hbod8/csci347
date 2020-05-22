@@ -95,7 +95,7 @@ int expand(char *orig, char *new, int newsize)
           fprintf(stderr, "Pipe failed.");
           return -1;
         }
-        processline(commandName, ends[1], WAIT);
+        processline(commandName, 0, ends[1], WAIT);
         orig[src] = saved;
         src++;
         close(ends[1]);
@@ -214,6 +214,39 @@ int expand(char *orig, char *new, int newsize)
     fprintf(stderr, "an expansion overflow error\n");
     return -1;
   }
+
+  // do pipelines/* process */
+  char *pipepos = strchr(new, '|');
+  if (pipepos != NULL) {
+    // int ends[2];
+    // if (pipe(ends) == -1) {
+    //   fprintf(stderr, "Pipe failed.");
+    //   return -1;
+    // }
+    find_pipe(new, pipepos, 0);
+  }
   // puts(new);
   return 0;
+}
+
+void find_pipe(char *str, char *pipei, int fd) {
+  char *pipepos = strchr(pipei, '|');
+  if (pipepos != NULL) {
+    // call pipe nowait
+    *pipei = '\0';
+    pipei++;
+    int ends[2];
+    if (pipe(ends) == -1) {
+      fprintf(stderr, "Pipe failed.");
+      return;
+    }
+    processline(str, fd, ends[1], NOWAIT);
+    find_pipe(pipei, pipepos, ends[0]);
+  }
+  else {
+    // call pipe wait
+    *pipei = '\0';
+    pipei++;
+    processline(str, fd, 1, WAIT);
+  }
 }

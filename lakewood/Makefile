@@ -6,4 +6,4 @@ lakewood: $(FILES)
 	$(CC) $(CFLAGS) -o lakewood $(FILES)
 
 clean:
-	rm -f $(FILES)
+	rm -f $(FILES) lakewood

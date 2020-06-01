@@ -140,73 +140,73 @@ void *thread_body(void *arg)
 /* Entry Point */
 int main(int argc, char **args)
 {
-  // /* Process command line arguments */
-  // time_t t;
-  // if (argc == 2)
-  // {
-  //   threadc = atoi(args[1]);
-  //   grouprate = 6;
-  //   srand((unsigned)time(&t));
-  // }
-  // else if (argc == 3)
-  // {
-  //   threadc = atoi(args[1]);
-  //   grouprate = atoi(args[2]);
-  //   srand((unsigned)time(&t));
-  // }
-  // else if (argc == 4)
-  // {
-  //   threadc = atoi(args[1]);
-  //   grouprate = atoi(args[2]);
-  //   srand(0);
-  // }
-  // else
-  // {
-  //   fprintf(stderr, "Usage: %s groups [rate] / [rate norand]\n", args[0]);
-  //   exit(1);
-  // }
-  // /* Create renter information */
-  // struct group groups[threadc];
+  /* Process command line arguments */
+  time_t t;
+  if (argc == 2)
+  {
+    threadc = atoi(args[1]);
+    grouprate = 6;
+    srand((unsigned)time(&t));
+  }
+  else if (argc == 3)
+  {
+    threadc = atoi(args[1]);
+    grouprate = atoi(args[2]);
+    srand((unsigned)time(&t));
+  }
+  else if (argc == 4)
+  {
+    threadc = atoi(args[1]);
+    grouprate = atoi(args[2]);
+    srand(0);
+  }
+  else
+  {
+    fprintf(stderr, "Usage: %s groups [rate] / [rate norand]\n", args[0]);
+    exit(1);
+  }
+  /* Create renter information */
+  struct group groups[threadc];
 
-  // for (int i = 0; i < threadc; i++)
-  // {
-  //   groups[i].number = i;
-  //   int r = (rand() % 3);
-  //   if (r == 0)
-  //   {
-  //     groups[i].lifejackets = KAYAK;
-  //   }
-  //   else if (r == 1)
-  //   {
-  //     groups[i].lifejackets = CANOE;
-  //   }
-  //   else if (r == 2)
-  //   {
-  //     groups[i].lifejackets = SAILBOAT;
-  //   }
-  // }
+  for (int i = 0; i < threadc; i++)
+  {
+    groups[i].number = i;
+    int r = (rand() % 3);
+    if (r == 0)
+    {
+      groups[i].lifejackets = KAYAK;
+    }
+    else if (r == 1)
+    {
+      groups[i].lifejackets = CANOE;
+    }
+    else if (r == 2)
+    {
+      groups[i].lifejackets = SAILBOAT;
+    }
+  }
 
-  // /* Create threads */
-  // pthread_t threads[threadc];
+  /* Create threads */
+  pthread_t threads[threadc];
 
-  // for (int i = 0; i < threadc; i++)
-  // {
-  //   if (pthread_create(&threads[i], NULL, thread_body, (void *)&groups[i]))
-  //   {
-  //     fatal(i);
-  //   }
-  // }
+  for (int i = 0; i < threadc; i++)
+  {
+    if (pthread_create(&threads[i], NULL, thread_body, (void *)&groups[i]))
+    {
+      fatal(i);
+    }
+  }
 
-  // /* Join threads */
-  // void *returnval;
+  /* Join threads */
+  void *returnval;
 
-  // for (int i = 0; i < threadc; i++)
-  // {
-  //   if (pthread_join(threads[i], &returnval))
-  //   {
-  //     fatal(i);
-  //   }
-  // }
+  for (int i = 0; i < threadc; i++)
+  {
+    if (pthread_join(threads[i], &returnval))
+    {
+      fatal(i);
+    }
+  }
 
   /* TEST QUEUE */
   struct queue q;

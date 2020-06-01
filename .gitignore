@@ -55,5 +55,8 @@ dkms.conf
 # ush Executable
 ush/ush
 
+# lakewood executable
+lakewood/lakewood
+
 #ush script
 *.ush

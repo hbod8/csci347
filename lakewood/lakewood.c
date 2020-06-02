@@ -14,7 +14,7 @@
 
 struct group
 {
-  long number;
+  int number;
   int lifejackets;
 };
 
@@ -25,14 +25,14 @@ int threadc;
 int grouprate;
 
 /* Fatal error handler */
-void fatal(long n)
+void fatal(int n)
 {
-  fprintf(stderr, "Fatal error on thread %ld.\n", n);
+  fprintf(stderr, "Fatal error on thread %d.\n", n);
   exit(n);
 }
 
 /* Fatal error handler with message */
-void fatalm(long n, char *msg, int errnum)
+void fatalm(int n, char *msg, int errnum)
 {
   char *errmsg = "";
   switch (errnum) {
@@ -48,19 +48,16 @@ void fatalm(long n, char *msg, int errnum)
     case EPERM:
     errmsg = "EPERM";
   }
-  fprintf(stderr, "Fatal error on thread %ld. %s:%s\n", n, msg, errmsg);
+  fprintf(stderr, "Fatal error on thread %d. %s:%s\n", n, msg, errmsg);
   exit(n);
 }
 
 /* Queue */
 
-/* Queue mutex */
-pthread_mutex_t queuemutex;
-
 /* Queue node */
 struct node
 {
-  long data;
+  int data;
   struct node *next;
 };
 
@@ -90,7 +87,7 @@ bool queue_isEmpty(struct queue *queue)
 }
 
 /* Queue push */
-void queue_push(struct queue *queue, long value)
+void queue_push(struct queue *queue, int value)
 {
   struct node *tmp = malloc(sizeof(struct node));
   if (tmp == NULL)
@@ -116,9 +113,9 @@ void queue_push(struct queue *queue, long value)
 }
 
 /* Queue pop */
-long queue_pop(struct queue *queue)
+int queue_pop(struct queue *queue)
 {
-  long retval = 0;
+  int retval = 0;
   struct node *tmp;
 
   if (!queue_isEmpty(queue))
@@ -144,7 +141,7 @@ pthread_mutex_t ljmutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t donecond = PTHREAD_COND_INITIALIZER;
 
 /* Get lifejackets */
-int getlifejackets(int n, long threadn, int *remaining)
+int getlifejackets(int n, int threadn, int *remaining)
 {
   /* lock mutex */
   int err = pthread_mutex_lock(&ljmutex);
@@ -156,7 +153,7 @@ int getlifejackets(int n, long threadn, int *remaining)
   if (groupqueue.size >= 5)
   {
     /* line was too long */
-    printf("The line was too long for group %ld, they left.\n", threadn);
+    printf("The line was too long for group %d, they left.\n", threadn);
     /* unlock mutex */
     err = pthread_mutex_unlock(&ljmutex);
     if (err)
@@ -194,7 +191,7 @@ int getlifejackets(int n, long threadn, int *remaining)
 }
 
 /* Return lifejackets */
-int returnlifejackets(int n, long threadn, int *remaining)
+int returnlifejackets(int n, int threadn, int *remaining)
 {
   /* lock mutex */
   int err = pthread_mutex_lock(&ljmutex);
@@ -241,19 +238,19 @@ char *gettype(int t)
 /* Print thread info */
 void printgroup(struct group *g)
 {
-  printf("Group %ld wants to rent a %s and needs %d lifejackets.\n", g->number, gettype(g->lifejackets), g->lifejackets);
+  printf("Group %d wants to rent a %s and needs %d lifejackets.\n", g->number, gettype(g->lifejackets), g->lifejackets);
 }
 
 /* Print thread info */
 void printgroupusing(struct group *g, int remaining)
 {
-  printf("Group %ld is using a %s and %d lifejackets. There are %d lifejackets left.\n", g->number, gettype(g->lifejackets), g->lifejackets, remaining);
+  printf("Group %d is using a %s and %d lifejackets. There are %d lifejackets left.\n", g->number, gettype(g->lifejackets), g->lifejackets, remaining);
 }
 
 /* Print thread info */
 void printgroupdone(struct group *g, int remaining)
 {
-  printf("Group %ld is done using a %s and %d lifejackets. There are %d lifejackets left.\n", g->number, gettype(g->lifejackets), g->lifejackets, remaining);
+  printf("Group %d is done using a %s and %d lifejackets. There are %d lifejackets left.\n", g->number, gettype(g->lifejackets), g->lifejackets, remaining);
 }
 
 /* Thread Entry Point */

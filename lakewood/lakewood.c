@@ -4,13 +4,13 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define KAYAK 1
 #define CANOE 2
 #define SAILBOAT 4
 
 #define LINE_TOO_LONG 1
-#define NOT_ENOUGH_LIFEJACKETS 2
 
 struct group
 {
@@ -28,6 +28,27 @@ int grouprate;
 void fatal(long n)
 {
   fprintf(stderr, "Fatal error on thread %ld.\n", n);
+  exit(n);
+}
+
+/* Fatal error handler with message */
+void fatalm(long n, char *msg, int errnum)
+{
+  char *errmsg = "";
+  switch (errnum) {
+    case EINVAL:
+    errmsg = "EINVAL";
+    break;
+    case EBUSY:
+    errmsg = "EBUSY";
+    break;
+    case EDEADLK:
+    errmsg = "EDEADLK";
+    break;
+    case EPERM:
+    errmsg = "EPERM";
+  }
+  fprintf(stderr, "Fatal error on thread %ld. %s:%s\n", n, msg, errmsg);
   exit(n);
 }
 
@@ -126,19 +147,21 @@ pthread_cond_t donecond = PTHREAD_COND_INITIALIZER;
 int getlifejackets(int n, long threadn, int *remaining)
 {
   /* lock mutex */
-  if (pthread_mutex_trylock(&ljmutex))
+  int err = pthread_mutex_lock(&ljmutex);
+  if (err)
   {
-    fatal(threadn);
+    fatalm(threadn, "Failed to lock when getting life jackets", err);
   }
   /* make sure there is space in the queue */
-  if (groupqueue.size > 5)
+  if (groupqueue.size >= 5)
   {
     /* line was too long */
     printf("The line was too long for group %ld, they left.\n", threadn);
     /* unlock mutex */
-    if (pthread_mutex_unlock(&ljmutex))
+    err = pthread_mutex_unlock(&ljmutex);
+    if (err)
     {
-      fatal(threadn);
+      fatalm(threadn, "Failed to unlock when getting life jackets (line too long)", err);
     }
     return LINE_TOO_LONG;
   }
@@ -150,7 +173,10 @@ int getlifejackets(int n, long threadn, int *remaining)
     /* wait for turn and lifejackets */
     while (groupqueue.head->data != threadn || lifejackets < n)
     {
-      pthread_cond_wait(&donecond, &ljmutex);
+      err = pthread_cond_wait(&donecond, &ljmutex);
+      if (err) {
+        fatalm(threadn, "Failed to wait when getting life jackets", err);
+      }
     }
     /* leave line */
     queue_pop(&groupqueue);
@@ -159,9 +185,10 @@ int getlifejackets(int n, long threadn, int *remaining)
   lifejackets -= n;
   *remaining = lifejackets;
   /* unlock mutex */
-  if (pthread_mutex_unlock(&ljmutex))
+  err = pthread_mutex_unlock(&ljmutex);
+  if (err)
   {
-    fatal(threadn);
+    fatalm(threadn, "Failed to unlock when getting life jackets", err);
   }
   return 0;
 }
@@ -170,22 +197,25 @@ int getlifejackets(int n, long threadn, int *remaining)
 int returnlifejackets(int n, long threadn, int *remaining)
 {
   /* lock mutex */
-  if (pthread_mutex_trylock(&ljmutex))
+  int err = pthread_mutex_lock(&ljmutex);
+  if (err)
   {
-    fatal(threadn);
+    fatalm(threadn, "Failed to lock when returning lifejackets", err);
   }
   /* return lifejackets */
   lifejackets += n;
   *remaining = lifejackets;
   /* unlock mutex */
-  if (pthread_mutex_unlock(&ljmutex))
+  err = pthread_mutex_unlock(&ljmutex);
+  if (err)
   {
-    fatal(threadn);
+    fatalm(threadn, "Failed to unlock when returning lifejackets", err);
   }
   /* broadcast done */
-  if (pthread_cond_broadcast(&donecond))
+  err = pthread_cond_broadcast(&donecond);
+  if (err)
   {
-    fatal(threadn);
+    fatalm(threadn, "Failed to broadcast when returning lifejackets", err);
   }
   return 0;
 }
@@ -234,8 +264,11 @@ void *thread_body(void *arg)
   printgroup(this);
   /* get lifejackets */
   int remainingljs = 0;
-  if (getlifejackets(this->lifejackets, this->number, &remainingljs)) {
+  int err = getlifejackets(this->lifejackets, this->number, &remainingljs);
+  if (err == LINE_TOO_LONG) {
     pthread_exit(arg);
+  } else if (err) {
+    fatal(this->number);
   }
   /* use life jackets */
   printgroupusing(this, remainingljs);
@@ -243,7 +276,7 @@ void *thread_body(void *arg)
   /* return lifejackets */
   returnlifejackets(this->lifejackets, this->number, &remainingljs);
   printgroupdone(this, remainingljs);
-  return arg;
+  pthread_exit((void *)arg);
 }
 
 /* Entry Point */

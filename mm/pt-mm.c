@@ -193,7 +193,7 @@ int main(int argc, char **argv)
       clock_t start = clock();
       MatSquare(A, B, x, sTimes);
       clock_t end = clock();
-      printf("Time elapsed: %f", (double)(end - start) / CLOCKS_PER_SEC);
+      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
     }
     else {
       MatSquare(A, B, x, sTimes);
@@ -213,7 +213,15 @@ int main(int argc, char **argv)
     C = (double *)malloc(sizeof(double) * x * z);
     MatGen(A, x, y, useRand);
     MatGen(B, y, z, useRand);
-    MatMul(A, B, C, x, y, z);
+    if (timeExec) {
+      clock_t start = clock();
+      MatMul(A, B, C, x, y, z);
+      clock_t end = clock();
+      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+    }
+    else {
+      MatMul(A, B, C, x, y, z);
+    }
     if (debug)
     {
       printf("-------------- orignal A matrix ------------------\n");

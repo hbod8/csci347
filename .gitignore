@@ -60,3 +60,8 @@ lakewood/lakewood
 
 #ush script
 *.ush
+
+# Turn in files
+*.ps
+*.pdf
+*.txt

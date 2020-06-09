@@ -1,6 +1,7 @@
 /* Simple matrix multiply program
  *
  * Phil Nelson, March 5, 2019
+ * Modified by Harry Saliba June 9, 2020
  *
  */
 
@@ -16,7 +17,6 @@
  * of a location (x,y) in an array that has col columns.
  * This is calculated in row major order. 
  */
-
 #define idx(x, y, col) ((x) * (col) + (y))
 
 /* Matrix Multiply:
@@ -24,7 +24,6 @@
  *  This is the slow n^3 algorithm
  *  A and B are not be modified
  */
-
 void MatMul(double *A, double *B, double *C, int x, int y, int z)
 {
   int ix, jx, kx;
@@ -51,7 +50,6 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z)
  *
  *    A are not be modified.
  */
-
 void MatSquare(double *A, double *B, int x, int times)
 {
   int i;
@@ -102,7 +100,6 @@ void MatGen(double *A, int x, int y, int rand)
 }
 
 /* Print a help message on how to run the program */
-
 void usage(char *prog)
 {
   fprintf(stderr, "%s: [-dr] -x val -y val -z val\n", prog);
@@ -120,7 +117,6 @@ void usage(char *prog)
  *         -z   -- cols of B
  *         
  */
-
 int main(int argc, char **argv)
 {
   extern char *optarg; /* defined by getopt(3) */
@@ -132,8 +128,9 @@ int main(int argc, char **argv)
   int square = 0;
   int useRand = 0;
   int sTimes = 0;
+  int timeExec = 0;
 
-  while ((ch = getopt(argc, argv, "drs:x:y:z:")) != -1)
+  while ((ch = getopt(argc, argv, "Tdrs:x:y:z:")) != -1)
   {
     switch (ch)
     {
@@ -156,6 +153,9 @@ int main(int argc, char **argv)
       break;
     case 'z': /* z size */
       z = atoi(optarg);
+      break;
+    case 'T': /* time option */
+      timeExec = 1;
       break;
     case '?': /* help */
     default:
@@ -189,7 +189,15 @@ int main(int argc, char **argv)
     A = (double *)malloc(sizeof(double) * x * x);
     B = (double *)malloc(sizeof(double) * x * x);
     MatGen(A, x, x, useRand);
-    MatSquare(A, B, x, sTimes);
+    if (timeExec) {
+      clock_t start = clock();
+      MatSquare(A, B, x, sTimes);
+      clock_t end = clock();
+      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+    }
+    else {
+      MatSquare(A, B, x, sTimes);
+    }
     if (debug)
     {
       printf("-------------- orignal matrix ------------------\n");
@@ -205,7 +213,15 @@ int main(int argc, char **argv)
     C = (double *)malloc(sizeof(double) * x * z);
     MatGen(A, x, y, useRand);
     MatGen(B, y, z, useRand);
-    MatMul(A, B, C, x, y, z);
+    if (timeExec) {
+      clock_t start = clock();
+      MatMul(A, B, C, x, y, z);
+      clock_t end = clock();
+      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+    }
+    else {
+      MatMul(A, B, C, x, y, z);
+    }
     if (debug)
     {
       printf("-------------- orignal A matrix ------------------\n");

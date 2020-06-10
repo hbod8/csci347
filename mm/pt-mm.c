@@ -20,7 +20,7 @@
  */
 #define idx(x, y, col) ((x) * (col) + (y))
 
-struct threadmatrix {
+struct partialmatmul {
   double *A;
   double *B;
   double *C;
@@ -30,6 +30,7 @@ struct threadmatrix {
   int i;
   int n;
   int threadn;
+  int square;
 };
 
 /* Fatal error handler */
@@ -39,25 +40,57 @@ void fatal(int n)
   exit(n);
 }
 
-void *thread_body(void *arg) {
-  struct threadmatrix *this = (struct threadmatrix *)arg;
+void partialMatMul(struct partialmatmul *this) {
   int ix, jx, kx;
 
-  for (ix = 0; ix < this->x; ix++)
+  /* rows of the solution */
+  for (ix = this->i; ix < this->i + this->n; ix++)
   {
-    // Rows of solution
-    for (jx = this->i / this->z; jx < (this->i + this->n) / this->z; jx++)
+    /* columns of the solution */
+    double tval = 0;
+    for (kx = 0; kx < this->x; kx++)
     {
-      // Columns of solution
-      double tval = 0;
-      for (kx = this->i / this->y; kx < (this->i + this->n) / this->y; kx++)
-      {
-        // Sum the A row time B column
-        tval += this->A[idx(ix, kx, this->y)] * this->B[idx(kx, jx, this->z)];
-        // printf("Thread %d: C[%d, %d] += A[%d, %d] * B[%d, %d]\n", this->threadn, ix, jx, ix, kx, kx, jx);
-      }
-      this->C[idx(ix, jx, this->z)] = tval;
+      // Sum the A row time B column
+      tval += this->A[idx(ix / this->y, kx, this->y)] * this->B[idx(kx, ix % this->z, this->z)];
+      /* Debug */
+      // printf("Thread %d: C[%d, %d] += A[%d, %d] * B[%d, %d]\n", this->threadn, ix / this->y, ix % this->z, ix / this->y, kx, kx, ix % this->z);
     }
+    this->C[ix] = tval;
+  }
+}
+
+void *thread_body(void *arg) {
+  struct partialmatmul *this = (struct partialmatmul *)arg;
+  if (this->square) {
+    int i;
+
+    partialMatMul(this);
+    if (this->square > 1)
+    {
+      // Need a Temporary for the computation
+      double *T = (double *)malloc(sizeof(double) * this->x * this->x);
+      for (i = 1; i < this->square; i += 2)
+      {
+        this->A = this->B;
+        this->B = this->B;
+        this->C = T;
+        partialMatMul(this);
+        if (i == this->square - 1)
+        {
+          memcpy(this->B, T, sizeof(double) * this->x * this->x);
+        }
+        else
+        {
+          this->A = T;
+          this->B = T;
+          this->C = this->B;
+          partialMatMul(this);
+        }
+      }
+      free(T);
+    }
+  } else {
+    partialMatMul(this);
   }
 }
 
@@ -71,7 +104,7 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
   /* Create threads */
   int size = x * z;
   int index = 0;
-  struct threadmatrix tm[nThreads];
+  struct partialmatmul tm[nThreads];
   pthread_t threads[nThreads];
   for (int i = 0; i < nThreads; i++ ) {
     tm[i].A = A;
@@ -80,13 +113,13 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
     tm[i].x = x;
     tm[i].y = y;
     tm[i].z = z;
+    tm[i].i = index;
     int n = size / (nThreads - i);
     size -= n;
-    tm[i].i = index;
-    // printf("Thread %d: %d for %d\n", i, index, n);s
     index += n;
     tm[i].n = n;
     tm[i].threadn = i;
+    tm[i].square = 0;
     if (pthread_create(&threads[i], NULL, thread_body, (void *)&tm[i]))
     {
       fatal(i);
@@ -101,23 +134,6 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
       fatal(i);
     }
   }
-  /* int ix, jx, kx;
-
-  for (ix = 0; ix < x; ix++)
-  {
-    // Rows of solution
-    for (jx = 0; jx < z; jx++)
-    {
-      // Columns of solution
-      double tval = 0;
-      for (kx = 0; kx < y; kx++)
-      {
-        // Sum the A row time B column
-        tval += A[idx(ix, kx, y)] * B[idx(kx, jx, z)];
-      }
-      C[idx(ix, jx, z)] = tval;
-    }
-  } */
 }
 
 /* Matrix Square: 
@@ -127,26 +143,38 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
  */
 void MatSquare(double *A, double *B, int x, int times, int nThreads)
 {
-  int i;
-
-  MatMul(A, A, B, x, x, x, nThreads);
-  if (times > 1)
-  {
-    /* Need a Temporary for the computation */
-    double *T = (double *)malloc(sizeof(double) * x * x);
-    for (i = 1; i < times; i += 2)
+  /* Create threads */
+  int size = x * x;
+  int index = 0;
+  struct partialmatmul tm[nThreads];
+  pthread_t threads[nThreads];
+  for (int i = 0; i < nThreads; i++ ) {
+    tm[i].A = A;
+    tm[i].B = A;
+    tm[i].C = B;
+    tm[i].x = x;
+    tm[i].y = x;
+    tm[i].z = x;
+    tm[i].i = index;
+    int n = size / (nThreads - i);
+    size -= n;
+    index += n;
+    tm[i].n = n;
+    tm[i].threadn = i;
+    tm[i].square = times;
+    if (pthread_create(&threads[i], NULL, thread_body, (void *)&tm[i]))
     {
-      MatMul(B, B, T, x, x, x, nThreads);
-      if (i == times - 1)
-      {
-        memcpy(B, T, sizeof(double) * x * x);
-      }
-      else
-      {
-        MatMul(T, T, B, x, x, x, nThreads);
-      }
+      fatal(i);
     }
-    free(T);
+  }
+  /* Join threads */
+  void *returnval;
+  for (int i = 0; i < nThreads; i++)
+  {
+    if (pthread_join(threads[i], &returnval))
+    {
+      fatal(i);
+    }
   }
 }
 
@@ -277,7 +305,7 @@ int main(int argc, char **argv)
       clock_t start = clock();
       MatSquare(A, B, x, sTimes, numThreads);
       clock_t end = clock();
-      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+      printf("CPU time elapsed: %f\n", ((double)(end - start) / CLOCKS_PER_SEC));
     }
     else
     {
@@ -303,7 +331,7 @@ int main(int argc, char **argv)
       clock_t start = clock();
       MatMul(A, B, C, x, y, z, numThreads);
       clock_t end = clock();
-      printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+      printf("CPU time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
     }
     else
     {

@@ -58,6 +58,10 @@ ush/ush
 # lakewood executable
 lakewood/lakewood
 
+# mm executables
+mm/mm
+mm/pt-mm
+
 #ush script
 *.ush
 

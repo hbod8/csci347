@@ -108,7 +108,7 @@ void *thread_body(void *arg) {
 void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
 {
   /* Create threads */
-  int size = x * z;
+  int size = y * z;
   int index = 0;
   struct partialmatmul tm[nThreads];
   pthread_t threads[nThreads];

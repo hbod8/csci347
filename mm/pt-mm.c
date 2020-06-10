@@ -303,9 +303,11 @@ int main(int argc, char **argv)
     if (timeExec)
     {
       clock_t start = clock();
+      time_t startElapsed = time(NULL);
       MatSquare(A, B, x, sTimes, numThreads);
       clock_t end = clock();
-      printf("CPU time elapsed: %f\n", ((double)(end - start) / CLOCKS_PER_SEC));
+      time_t endElapsed = time(NULL);
+      printf("CPU time: %fs\nTime elapsed:%lds\n", (double)(end - start) / CLOCKS_PER_SEC, endElapsed - startElapsed);
     }
     else
     {
@@ -329,9 +331,11 @@ int main(int argc, char **argv)
     if (timeExec)
     {
       clock_t start = clock();
+      time_t startElapsed = time(NULL);
       MatMul(A, B, C, x, y, z, numThreads);
       clock_t end = clock();
-      printf("CPU time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+      time_t endElapsed = time(NULL);
+      printf("CPU time: %fs\nTime elapsed:%lds\n", (double)(end - start) / CLOCKS_PER_SEC, endElapsed - startElapsed);
     }
     else
     {

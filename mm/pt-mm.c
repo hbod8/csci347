@@ -1,4 +1,4 @@
-/* Simple matrix multiply program
+/* Simple matrix multiply program with pthread implementation
  *
  * Phil Nelson, March 5, 2019
  * Modified by Harry Saliba June 9, 2020
@@ -12,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <pthread.h>
 
 /* idx macro calculates the correct 2-d based 1-d index
  * of a location (x,y) in an array that has col columns.
@@ -19,14 +20,88 @@
  */
 #define idx(x, y, col) ((x) * (col) + (y))
 
+struct threadmatrix {
+  double *A;
+  double *B;
+  double *C;
+  int x;
+  int y;
+  int z;
+  int i;
+  int n;
+  int threadn;
+};
+
+/* Fatal error handler */
+void fatal(int n)
+{
+  fprintf(stderr, "Fatal error on thread %d.\n", n);
+  exit(n);
+}
+
+void *thread_body(void *arg) {
+  struct threadmatrix *this = (struct threadmatrix *)arg;
+  int ix, jx, kx;
+
+  for (ix = 0; ix < this->x; ix++)
+  {
+    // Rows of solution
+    for (jx = this->i / this->z; jx < (this->i + this->n) / this->z; jx++)
+    {
+      // Columns of solution
+      double tval = 0;
+      for (kx = this->i / this->y; kx < (this->i + this->n) / this->y; kx++)
+      {
+        // Sum the A row time B column
+        tval += this->A[idx(ix, kx, this->y)] * this->B[idx(kx, jx, this->z)];
+        // printf("Thread %d: C[%d, %d] += A[%d, %d] * B[%d, %d]\n", this->threadn, ix, jx, ix, kx, kx, jx);
+      }
+      this->C[idx(ix, jx, this->z)] = tval;
+    }
+  }
+}
+
 /* Matrix Multiply:
  *  C (x by z)  =  A ( x by y ) times B (y by z)
  *  This is the slow n^3 algorithm
  *  A and B are not be modified
  */
-void MatMul(double *A, double *B, double *C, int x, int y, int z)
+void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
 {
-  int ix, jx, kx;
+  /* Create threads */
+  int size = x * z;
+  int index = 0;
+  struct threadmatrix tm[nThreads];
+  pthread_t threads[nThreads];
+  for (int i = 0; i < nThreads; i++ ) {
+    tm[i].A = A;
+    tm[i].B = B;
+    tm[i].C = C;
+    tm[i].x = x;
+    tm[i].y = y;
+    tm[i].z = z;
+    int n = size / (nThreads - i);
+    size -= n;
+    tm[i].i = index;
+    // printf("Thread %d: %d for %d\n", i, index, n);s
+    index += n;
+    tm[i].n = n;
+    tm[i].threadn = i;
+    if (pthread_create(&threads[i], NULL, thread_body, (void *)&tm[i]))
+    {
+      fatal(i);
+    }
+  }
+  /* Join threads */
+  void *returnval;
+  for (int i = 0; i < nThreads; i++)
+  {
+    if (pthread_join(threads[i], &returnval))
+    {
+      fatal(i);
+    }
+  }
+  /* int ix, jx, kx;
 
   for (ix = 0; ix < x; ix++)
   {
@@ -42,7 +117,7 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z)
       }
       C[idx(ix, jx, z)] = tval;
     }
-  }
+  } */
 }
 
 /* Matrix Square: 
@@ -50,22 +125,26 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z)
  *
  *    A are not be modified.
  */
-void MatSquare(double *A, double *B, int x, int times)
+void MatSquare(double *A, double *B, int x, int times, int nThreads)
 {
   int i;
 
-  MatMul(A, A, B, x, x, x);
+  MatMul(A, A, B, x, x, x, nThreads);
   if (times > 1)
   {
     /* Need a Temporary for the computation */
     double *T = (double *)malloc(sizeof(double) * x * x);
     for (i = 1; i < times; i += 2)
     {
-      MatMul(B, B, T, x, x, x);
+      MatMul(B, B, T, x, x, x, nThreads);
       if (i == times - 1)
+      {
         memcpy(B, T, sizeof(double) * x * x);
+      }
       else
-        MatMul(T, T, B, x, x, x);
+      {
+        MatMul(T, T, B, x, x, x, nThreads);
+      }
     }
     free(T);
   }
@@ -129,8 +208,9 @@ int main(int argc, char **argv)
   int useRand = 0;
   int sTimes = 0;
   int timeExec = 0;
+  int numThreads = 8;
 
-  while ((ch = getopt(argc, argv, "Tdrs:x:y:z:")) != -1)
+  while ((ch = getopt(argc, argv, "Tdrs:x:y:z:n:")) != -1)
   {
     switch (ch)
     {
@@ -153,6 +233,9 @@ int main(int argc, char **argv)
       break;
     case 'z': /* z size */
       z = atoi(optarg);
+      break;
+    case 'n': /* z size */
+      numThreads = atoi(optarg);
       break;
     case 'T': /* time option */
       timeExec = 1;
@@ -189,14 +272,16 @@ int main(int argc, char **argv)
     A = (double *)malloc(sizeof(double) * x * x);
     B = (double *)malloc(sizeof(double) * x * x);
     MatGen(A, x, x, useRand);
-    if (timeExec) {
+    if (timeExec)
+    {
       clock_t start = clock();
-      MatSquare(A, B, x, sTimes);
+      MatSquare(A, B, x, sTimes, numThreads);
       clock_t end = clock();
       printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
     }
-    else {
-      MatSquare(A, B, x, sTimes);
+    else
+    {
+      MatSquare(A, B, x, sTimes, numThreads);
     }
     if (debug)
     {
@@ -213,14 +298,16 @@ int main(int argc, char **argv)
     C = (double *)malloc(sizeof(double) * x * z);
     MatGen(A, x, y, useRand);
     MatGen(B, y, z, useRand);
-    if (timeExec) {
+    if (timeExec)
+    {
       clock_t start = clock();
-      MatMul(A, B, C, x, y, z);
+      MatMul(A, B, C, x, y, z, numThreads);
       clock_t end = clock();
       printf("Time elapsed: %f\n", (double)(end - start) / CLOCKS_PER_SEC);
     }
-    else {
-      MatMul(A, B, C, x, y, z);
+    else
+    {
+      MatMul(A, B, C, x, y, z, numThreads);
     }
     if (debug)
     {

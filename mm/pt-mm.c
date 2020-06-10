@@ -20,6 +20,8 @@
  */
 #define idx(x, y, col) ((x) * (col) + (y))
 
+pthread_barrier_t barrier;
+
 struct partialmatmul {
   double *A;
   double *B;
@@ -30,6 +32,7 @@ struct partialmatmul {
   int i;
   int n;
   int threadn;
+  int threadc;
   int square;
 };
 
@@ -62,6 +65,7 @@ void partialMatMul(struct partialmatmul *this) {
 void *thread_body(void *arg) {
   struct partialmatmul *this = (struct partialmatmul *)arg;
   if (this->square) {
+
     int i;
 
     partialMatMul(this);
@@ -75,6 +79,7 @@ void *thread_body(void *arg) {
         this->B = this->B;
         this->C = T;
         partialMatMul(this);
+        pthread_barrier_wait(&barrier);
         if (i == this->square - 1)
         {
           memcpy(this->B, T, sizeof(double) * this->x * this->x);
@@ -85,6 +90,7 @@ void *thread_body(void *arg) {
           this->B = T;
           this->C = this->B;
           partialMatMul(this);
+          pthread_barrier_wait(&barrier);
         }
       }
       free(T);
@@ -119,6 +125,7 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
     index += n;
     tm[i].n = n;
     tm[i].threadn = i;
+    tm[i].threadc = nThreads;
     tm[i].square = 0;
     if (pthread_create(&threads[i], NULL, thread_body, (void *)&tm[i]))
     {
@@ -144,6 +151,7 @@ void MatMul(double *A, double *B, double *C, int x, int y, int z, int nThreads)
 void MatSquare(double *A, double *B, int x, int times, int nThreads)
 {
   /* Create threads */
+  pthread_barrier_init(&barrier, NULL, nThreads);
   int size = x * x;
   int index = 0;
   struct partialmatmul tm[nThreads];
@@ -161,6 +169,7 @@ void MatSquare(double *A, double *B, int x, int times, int nThreads)
     index += n;
     tm[i].n = n;
     tm[i].threadn = i;
+    tm[i].threadc = nThreads;
     tm[i].square = times;
     if (pthread_create(&threads[i], NULL, thread_body, (void *)&tm[i]))
     {

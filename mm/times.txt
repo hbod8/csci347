@@ -1,3 +1,4 @@
+Non-Threaded implementation:
 CPU time: 39.324892s
 Time elapsed:39s
 2 threads:\n

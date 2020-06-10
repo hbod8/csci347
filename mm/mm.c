@@ -63,9 +63,13 @@ void MatSquare(double *A, double *B, int x, int times)
     {
       MatMul(B, B, T, x, x, x);
       if (i == times - 1)
+      {
         memcpy(B, T, sizeof(double) * x * x);
+      }
       else
+      {
         MatMul(T, T, B, x, x, x);
+      }
     }
     free(T);
   }

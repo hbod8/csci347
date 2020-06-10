@@ -1,0 +1,47 @@
+CPU time: 39.324892s
+Time elapsed:39s
+2 threads:\n
+CPU time: 69.113768s
+Time elapsed:34s
+3 threads:
+CPU time: 69.190118s
+Time elapsed:23s
+4 threads:
+CPU time: 69.383273s
+Time elapsed:18s
+5 threads:
+CPU time: 82.184175s
+Time elapsed:21s
+6 threads:
+CPU time: 90.742967s
+Time elapsed:17s
+7 threads:
+CPU time: 106.464509s
+Time elapsed:17s
+8 threads:
+CPU time: 124.410526s
+Time elapsed:16s
+9 threads:
+CPU time: 133.120681s
+Time elapsed:18s
+10 threads:
+CPU time: 135.915661s
+Time elapsed:17s
+11 threads:
+CPU time: 135.582226s
+Time elapsed:17s
+12 threads:
+CPU time: 137.739797s
+Time elapsed:18s
+13 threads:
+CPU time: 139.520593s
+Time elapsed:18s
+14 threads:
+CPU time: 138.124219s
+Time elapsed:17s
+15 threads:
+CPU time: 137.309808s
+Time elapsed:18s
+16 threads:
+CPU time: 136.872907s
+Time elapsed:17s
